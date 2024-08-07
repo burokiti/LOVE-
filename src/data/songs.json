@@ -2,6 +2,7 @@
   {
     "id": "1",
     "name": "アオクハルカ",
+    "centerCharacter": "日野下花帆",
     "singers": ["日野下花帆", "乙宗梢", "百生吟子"],
     "duration": 180,
     "attribute": "クール"
@@ -9,6 +10,7 @@
   {
     "id": "2",
     "name": "アイデンティティ(104期)",
+    "centerCharacter": "安養寺姫芽",
     "singers": ["安養寺姫芽", "大沢瑠璃乃", "藤島慈"],
     "duration": 210,
     "attribute": "ピュア"
@@ -16,6 +18,7 @@
   {
     "id": "3",
     "name": "レディバグ",
+    "centerCharacter": "徒町小鈴",
     "singers": ["徒町小鈴", "村野さやか", "夕霧綴理"],
     "duration": 210,
     "attribute": "クール"
