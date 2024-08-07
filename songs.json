@@ -13,4 +13,11 @@
     "duration": 210,
     "attribute": "ピュア"
   }
+  {
+    "id": "3",
+    "name": "レディバグ",
+    "singers": ["徒町小鈴", "村野さやか", "夕霧綴理"],
+    "duration": 210,
+    "attribute": "クール"
+  }
 ]
