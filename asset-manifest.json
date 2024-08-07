@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/burokiti/LOVE-.git/static/css/main.f855e6bc.css",
+    "main.js": "/burokiti/LOVE-.git/static/js/main.43b86ae4.js",
+    "static/js/453.ce9eba2e.chunk.js": "/burokiti/LOVE-.git/static/js/453.ce9eba2e.chunk.js",
+    "index.html": "/burokiti/LOVE-.git/index.html",
+    "main.f855e6bc.css.map": "/burokiti/LOVE-.git/static/css/main.f855e6bc.css.map",
+    "main.43b86ae4.js.map": "/burokiti/LOVE-.git/static/js/main.43b86ae4.js.map",
+    "453.ce9eba2e.chunk.js.map": "/burokiti/LOVE-.git/static/js/453.ce9eba2e.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f855e6bc.css",
+    "static/js/main.43b86ae4.js"
+  ]
+}
