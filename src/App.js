@@ -1,118 +1,167 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import characters from './data/characters.json';
+import songs from './data/songs.json';
+
+// ハートランクの倍率
+const heartRankMultipliers = {
+  LOVELIVE: 3.5,
+  PERFECT: 3.0,
+  GREAT: 2.5,
+  GOOD: 2.0,
+  NICE: 1.0,
+};
 
 function App() {
-  const [songs, setSongs] = useState([]);
   const [selectedSong, setSelectedSong] = useState(null);
-  const [characters, setCharacters] = useState([]);
-  const [stats, setStats] = useState([]);
-  const [heartRank, setHeartRank] = useState(3.5);
-  const [heartCount, setHeartCount] = useState(1);
-  const [loveBonus, setLoveBonus] = useState(1);
-  const [centerBonus, setCenterBonus] = useState(1);
-  const [loveAttract, setLoveAttract] = useState(1);
-  const heartRanks = { LOVELIVE: 3.5, PERFECT: 3.0, GREAT: 2.5, GOOD: 2.0, NICE: 1.0 };
+  const [songData, setSongData] = useState([]);
+  const [characterData, setCharacterData] = useState([]);
+  const [formData, setFormData] = useState([]);
+  const [heartRank, setHeartRank] = useState('LOVELIVE');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // 楽曲とキャラクターのデータをフェッチします。
+    // 楽曲データを取得
     fetch('/data/songs.json')
       .then(response => response.json())
-      .then(data => setSongs(data));
+      .then(data => setSongData(data))
+      .catch(err => setError('楽曲データの読み込みに失敗しました'));
+
+    // キャラクターデータを取得
     fetch('/data/characters.json')
       .then(response => response.json())
-      .then(data => setCharacters(data));
+      .then(data => setCharacterData(data))
+      .catch(err => setError('キャラクターデータの読み込みに失敗しました'));
   }, []);
 
   const handleSongChange = (event) => {
-    const selected = songs.find(song => song.id === event.target.value);
-    setSelectedSong(selected);
-    setStats(new Array(selected.singers.length).fill({ pure: 0, cool: 0, happy: 0 }));
+    const songId = event.target.value;
+    const song = songData.find(song => song.id === songId);
+    if (song) {
+      setSelectedSong(song);
+      const initialFormData = Array(song.numberOfCharacters).fill({
+        happyMain: '',
+        coolMain: '',
+        pureMain: '',
+        happySub: '',
+        coolSub: '',
+        pureSub: '',
+      });
+      setFormData(initialFormData);
+    }
   };
 
-  const handleStatChange = (index, stat, value) => {
-    const newStats = [...stats];
-    newStats[index] = { ...newStats[index], [stat]: value };
-    setStats(newStats);
+  const handleFormChange = (index, field, value) => {
+    const newFormData = [...formData];
+    newFormData[index][field] = value;
+    setFormData(newFormData);
   };
 
   const calculateLove = () => {
-    if (!selectedSong) return 0;
-    const totalStats = stats.reduce((sum, stat) => {
-      const pure = parseFloat(stat.pure) || 0;
-      const cool = parseFloat(stat.cool) || 0;
-      const happy = parseFloat(stat.happy) || 0;
-      let charTotal = pure + cool + happy;
-      if (selectedSong.attribute === 'ピュア') charTotal += pure * 0.5;
-      if (selectedSong.attribute === 'クール') charTotal += cool * 0.5;
-      if (selectedSong.attribute === 'ハッピー') charTotal += happy * 0.5;
-      return sum + charTotal;
+    if (!selectedSong) return;
+
+    const totalStatus = formData.reduce((total, character) => {
+      const mainStatus = parseInt(character.happyMain || 0, 10)
+        + parseInt(character.coolMain || 0, 10)
+        + parseInt(character.pureMain || 0, 10);
+
+      const subStatus = (parseInt(character.happySub || 0, 10)
+        + parseInt(character.coolSub || 0, 10)
+        + parseInt(character.pureSub || 0, 10)) / 10;
+
+      const songAttribute = selectedSong.attribute;
+      const mainStatusWithAttribute = songAttribute === 'happy' ? (parseInt(character.happyMain || 0, 10) * 1.5)
+        : songAttribute === 'cool' ? (parseInt(character.coolMain || 0, 10) * 1.5)
+        : songAttribute === 'pure' ? (parseInt(character.pureMain || 0, 10) * 1.5)
+        : mainStatus;
+
+      return total + mainStatusWithAttribute + subStatus;
     }, 0);
 
-    const averageStats = totalStats / selectedSong.singers.length;
-    return 120 * averageStats * heartRank * heartCount * centerBonus * loveBonus / selectedSong.duration * loveAttract;
+    const heartRankMultiplier = heartRankMultipliers[heartRank];
+    const love = 120 * (totalStatus / selectedSong.numberOfCharacters) * heartRankMultiplier * selectedSong.heartCount / selectedSong.duration;
+    alert(`獲得LOVE: ${love.toFixed(2)}`);
   };
 
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Music Love Calculator</h1>
+        <h1>獲得LOVE計算ツール</h1>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
         <div>
-          <label>Song: </label>
-          <select onChange={handleSongChange}>
-            <option value="">Select a song</option>
-            {songs.map(song => (
+          <label htmlFor="song">楽曲選択:</label>
+          <select id="song" onChange={handleSongChange}>
+            <option value="">選択してください</option>
+            {songData.map(song => (
               <option key={song.id} value={song.id}>{song.name}</option>
             ))}
           </select>
         </div>
         {selectedSong && (
-          <>
-            <h2>{selectedSong.name}</h2>
-            <div>
-              <label>Heart Rank: </label>
-              <select value={heartRank} onChange={(e) => setHeartRank(parseFloat(e.target.value))}>
-                {Object.keys(heartRanks).map(rank => (
-                  <option key={rank} value={heartRanks[rank]}>{rank}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label>Heart Count: </label>
-              <input type="number" value={heartCount} onChange={(e) => setHeartCount(parseFloat(e.target.value))} />
-            </div>
-            <div>
-              <label>Center Bonus: </label>
-              <input type="number" value={centerBonus} onChange={(e) => setCenterBonus(parseFloat(e.target.value))} />
-            </div>
-            <div>
-              <label>Love Bonus: </label>
-              <input type="number" value={loveBonus} onChange={(e) => setLoveBonus(parseFloat(e.target.value))} />
-            </div>
-            <div>
-              <label>Love Attract: </label>
-              <input type="number" value={loveAttract} onChange={(e) => setLoveAttract(parseFloat(e.target.value))} />
-            </div>
-            {selectedSong.singers.map((singer, index) => (
-              <div key={index}>
-                <h3>{singer}</h3>
+          <div>
+            {formData.map((_, index) => (
+              <div key={index} className="character-form">
+                <h2>キャラクター {index + 1}</h2>
                 <div>
-                  <label>Pure: </label>
-                  <input type="number" value={stats[index]?.pure || 0} onChange={(e) => handleStatChange(index, 'pure', e.target.value)} />
+                  <h3>メインステータス</h3>
+                  <label>ハッピー:
+                    <input
+                      type="number"
+                      value={formData[index].happyMain}
+                      onChange={(e) => handleFormChange(index, 'happyMain', e.target.value)}
+                    />
+                  </label>
+                  <label>クール:
+                    <input
+                      type="number"
+                      value={formData[index].coolMain}
+                      onChange={(e) => handleFormChange(index, 'coolMain', e.target.value)}
+                    />
+                  </label>
+                  <label>ピュア:
+                    <input
+                      type="number"
+                      value={formData[index].pureMain}
+                      onChange={(e) => handleFormChange(index, 'pureMain', e.target.value)}
+                    />
+                  </label>
                 </div>
                 <div>
-                  <label>Cool: </label>
-                  <input type="number" value={stats[index]?.cool || 0} onChange={(e) => handleStatChange(index, 'cool', e.target.value)} />
-                </div>
-                <div>
-                  <label>Happy: </label>
-                  <input type="number" value={stats[index]?.happy || 0} onChange={(e) => handleStatChange(index, 'happy', e.target.value)} />
+                  <h3>サブステータス</h3>
+                  <label>ハッピー:
+                    <input
+                      type="number"
+                      value={formData[index].happySub}
+                      onChange={(e) => handleFormChange(index, 'happySub', e.target.value)}
+                    />
+                  </label>
+                  <label>クール:
+                    <input
+                      type="number"
+                      value={formData[index].coolSub}
+                      onChange={(e) => handleFormChange(index, 'coolSub', e.target.value)}
+                    />
+                  </label>
+                  <label>ピュア:
+                    <input
+                      type="number"
+                      value={formData[index].pureSub}
+                      onChange={(e) => handleFormChange(index, 'pureSub', e.target.value)}
+                    />
+                  </label>
                 </div>
               </div>
             ))}
             <div>
-              <h2>Calculated LOVE: {calculateLove().toFixed(2)}</h2>
+              <label htmlFor="heartRank">ハートランク:</label>
+              <select id="heartRank" value={heartRank} onChange={(e) => setHeartRank(e.target.value)}>
+                {Object.keys(heartRankMultipliers).map(rank => (
+                  <option key={rank} value={rank}>{rank}</option>
+                ))}
+              </select>
             </div>
-          </>
+            <button onClick={calculateLove}>計算</button>
+          </div>
         )}
       </header>
     </div>
